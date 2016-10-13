@@ -272,6 +272,7 @@ class _ScratchToCatrobat(object):
         "mouseX": catformula.Sensors.FINGER_X,
         "mouseY": catformula.Sensors.FINGER_Y,
         "timeAndDate": None,
+        "distanceTo:": None,
 
         # clone
         "createCloneOf": catbricks.CloneBrick,
@@ -1460,3 +1461,10 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         time_formula = catformula.FormulaElement(catformula.FormulaElement.ElementType.SENSOR, 
                                                  converted_time_or_date, None)
         return time_formula
+
+    @_register_handler(_block_name_to_handler_map, "distanceTo:")
+    def _convert_distance_to_block(self):
+        [object] = self.arguments
+        distance_to = catformula.FormulaElement(catformula.FormulaElement.ElementType.SENSOR, 
+                                                str(object), None)
+        return distance_to
