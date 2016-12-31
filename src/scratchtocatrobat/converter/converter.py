@@ -293,6 +293,7 @@ class _ScratchToCatrobat(object):
         "clearPenTrails": catbricks.ClearBackgroundBrick,
         "penColor:": catbricks.SetPenColorBrick,
         "penSize:": catbricks.SetPenSizeBrick,
+        "setPenHueTo:": catbricks.SetPenColorBrick,
         #"changePenSizeBy:": None,
         #"changePenHueBy:": None,
 
@@ -1683,6 +1684,8 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         pen_size_sv = catbricks.SetVariableBrick(catformula.Formula(pen_size), pen_size_uv)
         return [pen_size_sv, self.CatrobatClass(catformula.Formula(pen_size))]
 
+
+
 #     @_register_handler(_block_name_to_handler_map, "changePenHueBy:")
 #     def _convert_change_pen_color_block(self):
 #         [hue] = self.arguments
@@ -1768,3 +1771,34 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         else:
             return catbricks.NoteBrick("Error: Not a valid parameter")
         return catr_brick
+
+    @_register_handler(_block_name_to_handler_map, "setPenHueTo:")
+    def _convert_set_pen_hue_block(self):
+        [hue] = self.arguments
+        #TODO: get old color on old_color
+#         r_, g_, b_ = old_color.getRed()/255.0, old_color.getGreen()/255.0, old_color.getBlue()/255.0
+        hue = hue % 200
+        hue = hue * 360 / 200
+        h, s, v = int(hue), 1, 0.5
+
+        C = (1 - abs(2*v - 1)) * s
+        X = C * (1-abs( ( (h/60) % 2) -1 ) )
+        m = v - C/2
+
+        if h < 60 and h >= 0:
+            r_, g_, b_ = C, X, 0
+        if h < 120 and h >= 60:
+            r_, g_, b_ = X, C, 0
+        if h < 180 and h >= 120:
+            r_, g_, b_ = 0, C, X
+        if h < 240 and h >= 180:
+            r_, g_, b_ = 0, X, C
+        if h < 300 and h >= 240:
+            r_, g_, b_ = X, 0, C
+        if h < 360 and h >= 300:
+            r_, g_, b_ = C, 0, X
+
+        r, g, b = (r_ + m) * 255, (g_ + m) * 255, (b_ + m) * 255
+        #new_color = Color(int(r), int(g), int(b))
+        print(r, g, b)
+        return self.CatrobatClass(int(r),int(g),int(b))
