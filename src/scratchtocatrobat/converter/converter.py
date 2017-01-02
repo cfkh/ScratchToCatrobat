@@ -1777,28 +1777,192 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         [hue] = self.arguments
         #TODO: get old color on old_color
 #         r_, g_, b_ = old_color.getRed()/255.0, old_color.getGreen()/255.0, old_color.getBlue()/255.0
-        hue = hue % 200
-        hue = hue * 360 / 200
-        h, s, v = int(hue), 1, 0.5
 
-        C = (1 - abs(2*v - 1)) * s
-        X = C * (1-abs( ( (h/60) % 2) -1 ) )
-        m = v - C/2
+        if isinstance(hue, int):
+            hue = hue % 200
+            hue = hue * 360 / 200
+            h, s, v = hue, 1, 0.5
 
-        if h < 60 and h >= 0:
-            r_, g_, b_ = C, X, 0
-        if h < 120 and h >= 60:
-            r_, g_, b_ = X, C, 0
-        if h < 180 and h >= 120:
-            r_, g_, b_ = 0, C, X
-        if h < 240 and h >= 180:
-            r_, g_, b_ = 0, X, C
-        if h < 300 and h >= 240:
-            r_, g_, b_ = X, 0, C
-        if h < 360 and h >= 300:
-            r_, g_, b_ = C, 0, X
+            C = (1 - abs(2*v - 1)) * s
+            X = C * (1-abs( ( (h/60) % 2) -1 ) )
+            m = v - C/2
 
-        r, g, b = (r_ + m) * 255, (g_ + m) * 255, (b_ + m) * 255
-        #new_color = Color(int(r), int(g), int(b))
-        print(r, g, b)
-        return self.CatrobatClass(int(r),int(g),int(b))
+            if h < 60 and h >= 0:
+                r_, g_, b_ = C, X, 0
+            if h < 120 and h >= 60:
+                r_, g_, b_ = X, C, 0
+            if h < 180 and h >= 120:
+                r_, g_, b_ = 0, C, X
+            if h < 240 and h >= 180:
+                r_, g_, b_ = 0, X, C
+            if h < 300 and h >= 240:
+                r_, g_, b_ = X, 0, C
+            if h < 360 and h >= 300:
+                r_, g_, b_ = C, 0, X
+
+            r, g, b = (r_ + m) * 255, (g_ + m) * 255, (b_ + m) * 255
+
+            return self.CatrobatClass(int(r),int(g),int(b))
+
+        elif isinstance(hue, catformula.FormulaElement):
+            #hue = hue % 200
+            h = self._converted_helper_brick_or_formula_element([hue, 200], "%") # h%200
+            h = self._converted_helper_brick_or_formula_element([h], "()") # (h%200)
+            h = self._converted_helper_brick_or_formula_element([h, 360], "*") # (h%200)*360
+            h = self._converted_helper_brick_or_formula_element([h, 200], "/") # (h%200)*360/200
+            h = self._converted_helper_brick_or_formula_element([h], "()") # ((h%200)*360/200)
+ 
+            s, v = 1, 0.5
+            C = (1 - abs(2*v - 1)) * s
+            m = v - C/2
+
+            #X = C * (1-abs( ( (h/60) % 2) -1 ) )
+            X = self._converted_helper_brick_or_formula_element([h, 60], "/") # hue/60
+            X = self._converted_helper_brick_or_formula_element([X], "()") # (hue/60)
+            X = self._converted_helper_brick_or_formula_element([X, 2], "%") # (hue/60)%2
+            X = self._converted_helper_brick_or_formula_element([X], "()") # ((hue/60)%2)
+            X = self._converted_helper_brick_or_formula_element([X, 1], "-") # ((hue/60)%2)-1
+            X = self._converted_helper_brick_or_formula_element([X], "()") # (((hue/60)%2)-1)
+            X = self._converted_helper_brick_or_formula_element([X, X],"*") # (((hue/60)%2)-1)^2
+            X = self._converted_helper_brick_or_formula_element([X], "()") # ((((hue/60)%2)-1)^2)
+            X = self._converted_helper_brick_or_formula_element([X], "sqrt") # sqrt(((((hue/60)%2)-1)^2))
+            X = self._converted_helper_brick_or_formula_element([X], "()") # (sqrt(((((hue/60)%2)-1)^2)))
+            X = self._converted_helper_brick_or_formula_element([1, X], "-") # 1-(sqrt(((((hue/60)%2)-1)^2)))
+            X = self._converted_helper_brick_or_formula_element([X], "()") # (1-(sqrt(((((hue/60)%2)-1)^2))))
+            X = self._converted_helper_brick_or_formula_element([C, X], "*") # C * (1-(sqrt(((((hue/60)%2)-1)^2))))
+
+            workaround = []
+
+            cond1 = self._converted_helper_brick_or_formula_element([h, 60], "<")
+            cond2_1 = self._converted_helper_brick_or_formula_element([h, 0], ">")
+            cond2_2 = self._converted_helper_brick_or_formula_element([h, 0], "=")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+            cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+            if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+            if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+            r = self._converted_helper_brick_or_formula_element([C + m, 255], "*")
+            g = self._converted_helper_brick_or_formula_element([X, m], "+")
+            g = self._converted_helper_brick_or_formula_element([g], "()")
+            g = self._converted_helper_brick_or_formula_element([g, 255], "*")
+            b = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+            set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+            workaround.append(if_begin_brick)
+            workaround.append(set_color_brick)
+            workaround.append(if_end_brick)
+
+            cond1 = self._converted_helper_brick_or_formula_element([h, 120], "<")
+            cond2_1 = self._converted_helper_brick_or_formula_element([h, 60], ">")
+            cond2_2 = self._converted_helper_brick_or_formula_element([h, 60], "=")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+            cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+            if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+            if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+            g = self._converted_helper_brick_or_formula_element([C + m, 255], "*")
+            r = self._converted_helper_brick_or_formula_element([X, m], "+")
+            r = self._converted_helper_brick_or_formula_element([r], "()")
+            r = self._converted_helper_brick_or_formula_element([r, 255], "*")
+            b = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+            set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+            workaround.append(if_begin_brick)
+            workaround.append(set_color_brick)
+            workaround.append(if_end_brick)
+
+            cond1 = self._converted_helper_brick_or_formula_element([h, 180], "<")
+            cond2_1 = self._converted_helper_brick_or_formula_element([h, 120], ">")
+            cond2_2 = self._converted_helper_brick_or_formula_element([h, 120], "=")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+            cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+            if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+            if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+            g = self._converted_helper_brick_or_formula_element([C + m, 255], "*")
+            b = self._converted_helper_brick_or_formula_element([X, m], "+")
+            b = self._converted_helper_brick_or_formula_element([b], "()")
+            b = self._converted_helper_brick_or_formula_element([b, 255], "*")
+            r = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+            set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+            workaround.append(if_begin_brick)
+            workaround.append(set_color_brick)
+            workaround.append(if_end_brick)
+
+            cond1 = self._converted_helper_brick_or_formula_element([h, 240], "<")
+            cond2_1 = self._converted_helper_brick_or_formula_element([h, 180], ">")
+            cond2_2 = self._converted_helper_brick_or_formula_element([h, 180], "=")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+            cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+            if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+            if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+            b = self._converted_helper_brick_or_formula_element([C + m, 255], "*")
+            g = self._converted_helper_brick_or_formula_element([X, m], "+")
+            g = self._converted_helper_brick_or_formula_element([g], "()")
+            g = self._converted_helper_brick_or_formula_element([g, 255], "*")
+            r = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+            set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+            workaround.append(if_begin_brick)
+            workaround.append(set_color_brick)
+            workaround.append(if_end_brick)
+
+            cond1 = self._converted_helper_brick_or_formula_element([h, 300], "<")
+            cond2_1 = self._converted_helper_brick_or_formula_element([h, 240], ">")
+            cond2_2 = self._converted_helper_brick_or_formula_element([h, 240], "=")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+            cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+            if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+            if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+            b = self._converted_helper_brick_or_formula_element([C + m, 255], "*")
+            r = self._converted_helper_brick_or_formula_element([X, m], "+")
+            r = self._converted_helper_brick_or_formula_element([r], "()")
+            r = self._converted_helper_brick_or_formula_element([r, 255], "*")
+            g = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+            set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+            workaround.append(if_begin_brick)
+            workaround.append(set_color_brick)
+            workaround.append(if_end_brick)
+
+            cond1 = self._converted_helper_brick_or_formula_element([h, 360], "<")
+            cond2_1 = self._converted_helper_brick_or_formula_element([h, 300], ">")
+            cond2_2 = self._converted_helper_brick_or_formula_element([h, 300], "=")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+            cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+            cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+            if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+            if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+            r = self._converted_helper_brick_or_formula_element([C + m, 255], "*")
+            b = self._converted_helper_brick_or_formula_element([X, m], "+")
+            b = self._converted_helper_brick_or_formula_element([b], "()")
+            b = self._converted_helper_brick_or_formula_element([b, 255], "*")
+            g = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+            set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+            workaround.append(if_begin_brick)
+            workaround.append(set_color_brick)
+            workaround.append(if_end_brick)
+
+            return workaround
