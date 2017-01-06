@@ -1222,6 +1222,7 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         C = self._converted_helper_brick_or_formula_element([1, C], "-") # 1 - (sqrt(((2*l) - 1)^2))
         C = self._converted_helper_brick_or_formula_element([C], "()") # (1 - (sqrt(((2*l) - 1)^2)))
         C = self._converted_helper_brick_or_formula_element([C, s], "*") # (1 - (sqrt(((2*l) - 1)^2))) * s
+        C = self._converted_helper_brick_or_formula_element([C], "()") # ((1 - (sqrt(((2*l) - 1)^2))) * s)
 
         #m = l - C/2
         m = self._converted_helper_brick_or_formula_element([C, 2], "/")
@@ -1243,6 +1244,7 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         X = self._converted_helper_brick_or_formula_element([1, X], "-") # 1-(sqrt(((((hue/60)%2)-1)^2)))
         X = self._converted_helper_brick_or_formula_element([X], "()") # (1-(sqrt(((((hue/60)%2)-1)^2))))
         X = self._converted_helper_brick_or_formula_element([C, X], "*") # C * (1-(sqrt(((((hue/60)%2)-1)^2))))
+        X = self._converted_helper_brick_or_formula_element([X], "()") # (C * (1-(sqrt(((((hue/60)%2)-1)^2)))))
 
         return C, m, X
 
