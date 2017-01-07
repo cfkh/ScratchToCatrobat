@@ -1928,6 +1928,64 @@ class TestConvertBlocks(common_testing.BaseTestCase):
         assert catr_bricks[0].userVariable.getValue().formulaTree.leftChild.value == "2"
         assert catr_bricks[0].userVariable.getValue().formulaTree.rightChild.value == "32"
 
+    #setPenHueTo
+    def test_can_convert_set_pen_color_hue_block(self):
+        scratch_block = ["setPenHueTo:", 50]
+        [catr_bricks] = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
+        assert isinstance(catr_bricks, catbricks.SetPenColorBrick)
+
+    #setPenHueTo
+    def test_can_convert_set_pen_color_hue_block_with_formula(self):
+        scratch_block = ["setPenHueTo:", ["+", 25, 25]]
+        catr_bricks = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
+        assert isinstance(catr_bricks[0], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[1], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[2], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[3], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[4], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[5], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[6], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[7], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[8], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[9], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[10], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[11], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[12], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[13], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[14], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[15], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[16], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[17], catbricks.IfThenLogicEndBrick)
+
+    #setPenShadeTo
+    def test_can_convert_set_pen_shade_block(self):
+        scratch_block = ["setPenShadeTo:", 50]
+        [catr_bricks] = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
+        assert isinstance(catr_bricks, catbricks.SetPenColorBrick)
+
+    #setPenShadeTo
+    def test_can_convert_set_shade_block_with_formula(self):
+        scratch_block = ["setPenShadeTo:", ["+", 25, 25]]
+        catr_bricks = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
+        assert isinstance(catr_bricks[0], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[1], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[2], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[3], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[4], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[5], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[6], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[7], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[8], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[9], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[10], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[11], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[12], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[13], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[14], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[15], catbricks.IfThenLogicBeginBrick)
+        assert isinstance(catr_bricks[16], catbricks.SetPenColorBrick)
+        assert isinstance(catr_bricks[17], catbricks.IfThenLogicEndBrick)
+
     #call
     def test_can_convert_call_block_user_script_already_defined_simple(self):
         function_header = "number1 %n number1"
