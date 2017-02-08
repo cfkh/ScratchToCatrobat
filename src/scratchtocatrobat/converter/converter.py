@@ -293,7 +293,9 @@ class _ScratchToCatrobat(object):
         "clearPenTrails": catbricks.ClearBackgroundBrick,
         "penColor:": catbricks.SetPenColorBrick,
         "penSize:": catbricks.SetPenSizeBrick,
-        "setPenHueTo:": None,
+        "setPenHueTo:": catbricks.SetPenColorBrick,
+        "setPenShadeTo:": catbricks.SetPenColorBrick,
+
         #"changePenSizeBy:": None,
         #"changePenHueBy:": None,
 
@@ -1207,6 +1209,77 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         self.CatrobatClass = preserved_catrobat_class
         return converted_element
 
+    def _set_up_CmX_helper(self, h, s, l):
+        #C = (1 - abs(2*l - 1)) * s
+        C = self._converted_helper_brick_or_formula_element([2, l], "*") # 2*l
+        C = self._converted_helper_brick_or_formula_element([C], "()") # (2*l)
+        C = self._converted_helper_brick_or_formula_element([C, 1], "-") # (2*l) - 1
+        C = self._converted_helper_brick_or_formula_element([C], "()") # ((2*l) - 1)
+        C = self._converted_helper_brick_or_formula_element([C, C], "*") # ((2*l) - 1)^2
+        C = self._converted_helper_brick_or_formula_element([C], "()") # (((2*l) - 1)^2)
+        C = self._converted_helper_brick_or_formula_element([C], "sqrt") # sqrt(((2*l) - 1)^2)
+        C = self._converted_helper_brick_or_formula_element([C], "()") # (sqrt(((2*l) - 1)^2))
+        C = self._converted_helper_brick_or_formula_element([1, C], "-") # 1 - (sqrt(((2*l) - 1)^2))
+        C = self._converted_helper_brick_or_formula_element([C], "()") # (1 - (sqrt(((2*l) - 1)^2)))
+        C = self._converted_helper_brick_or_formula_element([C, s], "*") # (1 - (sqrt(((2*l) - 1)^2))) * s
+        C = self._converted_helper_brick_or_formula_element([C], "()") # ((1 - (sqrt(((2*l) - 1)^2))) * s)
+
+        #m = l - C/2
+        m = self._converted_helper_brick_or_formula_element([C, 2], "/")
+        m = self._converted_helper_brick_or_formula_element([m], "()")
+        m = self._converted_helper_brick_or_formula_element([l, m], "-")
+        m = self._converted_helper_brick_or_formula_element([m], "()")
+
+        #X = C * (1-abs( ( (h/60) % 2) -1 ) )
+        X = self._converted_helper_brick_or_formula_element([h, 60], "/") # hue/60
+        X = self._converted_helper_brick_or_formula_element([X], "()") # (hue/60)
+        X = self._converted_helper_brick_or_formula_element([X, 2], "%") # (hue/60)%2
+        X = self._converted_helper_brick_or_formula_element([X], "()") # ((hue/60)%2)
+        X = self._converted_helper_brick_or_formula_element([X, 1], "-") # ((hue/60)%2)-1
+        X = self._converted_helper_brick_or_formula_element([X], "()") # (((hue/60)%2)-1)
+        X = self._converted_helper_brick_or_formula_element([X, X],"*") # (((hue/60)%2)-1)^2
+        X = self._converted_helper_brick_or_formula_element([X], "()") # ((((hue/60)%2)-1)^2)
+        X = self._converted_helper_brick_or_formula_element([X], "sqrt") # sqrt(((((hue/60)%2)-1)^2))
+        X = self._converted_helper_brick_or_formula_element([X], "()") # (sqrt(((((hue/60)%2)-1)^2)))
+        X = self._converted_helper_brick_or_formula_element([1, X], "-") # 1-(sqrt(((((hue/60)%2)-1)^2)))
+        X = self._converted_helper_brick_or_formula_element([X], "()") # (1-(sqrt(((((hue/60)%2)-1)^2))))
+        X = self._converted_helper_brick_or_formula_element([C, X], "*") # C * (1-(sqrt(((((hue/60)%2)-1)^2))))
+        X = self._converted_helper_brick_or_formula_element([X], "()") # (C * (1-(sqrt(((((hue/60)%2)-1)^2)))))
+
+        return C, m, X
+
+    def _get_hsv_conditions_helper(self, h, C, m, X, start_angle, end_angle):
+        cond1 = self._converted_helper_brick_or_formula_element([h, end_angle], "<")
+        cond2_1 = self._converted_helper_brick_or_formula_element([h, start_angle], ">")
+        cond2_2 = self._converted_helper_brick_or_formula_element([h, start_angle], "=")
+        cond2 = self._converted_helper_brick_or_formula_element([cond2_1, cond2_2], "|")
+        cond2 = self._converted_helper_brick_or_formula_element([cond2], "()")
+        cond = self._converted_helper_brick_or_formula_element([cond1, cond2], "&")
+
+        if_begin_brick = catbricks.IfThenLogicBeginBrick(catformula.Formula(cond))
+        if_end_brick = catbricks.IfThenLogicEndBrick(if_begin_brick)
+
+        C_m = self._converted_helper_brick_or_formula_element([C, m], "+")
+        C_m = self._converted_helper_brick_or_formula_element([C_m], "()")
+        C_m = self._converted_helper_brick_or_formula_element([C_m, 255], "*")
+        X_m = self._converted_helper_brick_or_formula_element([X, m], "+")
+        X_m = self._converted_helper_brick_or_formula_element([X_m], "()")
+        X_m = self._converted_helper_brick_or_formula_element([X_m, 255], "*")
+        m_0 = self._converted_helper_brick_or_formula_element([m, 255], "*")
+
+        switcher = {
+            0: [C_m, X_m, m_0],
+            60: [X_m, C_m, m_0],
+            120: [m_0, C_m, X_m],
+            180: [m_0, X_m, C_m],
+            240: [X_m, m_0, C_m],
+            300: [C_m, m_0, X_m],
+        }
+        r, g, b = switcher.get(start_angle, "ERROR")
+        set_color_brick = self.CatrobatClass(catformula.Formula(r), catformula.Formula(g), catformula.Formula(b))
+
+        return [if_begin_brick, set_color_brick, if_end_brick]
+
     # formula element blocks (compute, operator, ...)
     @_register_handler(_block_name_to_handler_map, "()")
     def _convert_bracket_block(self):
@@ -1710,6 +1783,8 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         pen_size_sv = catbricks.SetVariableBrick(catformula.Formula(pen_size), pen_size_uv)
         return [pen_size_sv, self.CatrobatClass(catformula.Formula(pen_size))]
 
+
+
 #     @_register_handler(_block_name_to_handler_map, "changePenHueBy:")
 #     def _convert_change_pen_color_block(self):
 #         [hue] = self.arguments
@@ -1804,3 +1879,122 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         else:
             return catbricks.NoteBrick("Error: Not a valid parameter")
         return go_to_brick
+
+    @_register_handler(_block_name_to_handler_map, "setPenHueTo:")
+    def _convert_set_pen_hue_block(self):
+        [hue] = self.arguments
+        #TODO: get old color on old_color
+#         r_, g_, b_ = old_color.getRed()/255.0, old_color.getGreen()/255.0, old_color.getBlue()/255.0
+
+        if isinstance(hue, int):
+            hue = hue % 200
+            hue = hue * 360 / 200
+            h, s, l = hue, 1, 0.5
+
+            #TODO: At the time Catroid implements a sensor for hue or lightness l should be
+            #      changed to the lightness value of the pen in the scene
+            C = (1 - abs(2*l - 1)) * s
+            X = C * (1-abs( ( (h/60) % 2) -1 ) )
+            m = l - C/2
+
+            if h < 60 and h >= 0:
+                r_, g_, b_ = C, X, 0
+            if h < 120 and h >= 60:
+                r_, g_, b_ = X, C, 0
+            if h < 180 and h >= 120:
+                r_, g_, b_ = 0, C, X
+            if h < 240 and h >= 180:
+                r_, g_, b_ = 0, X, C
+            if h < 300 and h >= 240:
+                r_, g_, b_ = X, 0, C
+            if h < 360 and h >= 300:
+                r_, g_, b_ = C, 0, X
+
+            r, g, b = (r_ + m) * 255, (g_ + m) * 255, (b_ + m) * 255
+
+            return self.CatrobatClass(int(r),int(g),int(b))
+
+        elif isinstance(hue, catformula.FormulaElement):
+            #hue = hue % 200
+            h = self._converted_helper_brick_or_formula_element([hue, 200], "%") # h%200
+            h = self._converted_helper_brick_or_formula_element([h], "()") # (h%200)
+            h = self._converted_helper_brick_or_formula_element([h, 360], "*") # (h%200)*360
+            h = self._converted_helper_brick_or_formula_element([h, 200], "/") # (h%200)*360/200
+            h = self._converted_helper_brick_or_formula_element([h], "()") # ((h%200)*360/200)
+
+            #TODO: At the time Catroid implements a sensor for hue or lightness l should be
+            #      changed to the lightness value of the pen in the scene
+            s, l = 1, 0.5
+
+            C, m, X = self._set_up_CmX_helper(h, s, l)
+
+            workaround = []
+            for start_angle in range(0, 360, 60):
+                workaround.extend(self._get_hsv_conditions_helper(h, C, m, X, start_angle, start_angle+60))
+
+            return workaround
+
+    @_register_handler(_block_name_to_handler_map, "setPenShadeTo:")
+    def _convert_set_pen_shade_block(self):
+        [l] = self.arguments
+        #TODO: get old color on old_color
+#         r_, g_, b_ = old_color.getRed()/255.0, old_color.getGreen()/255.0, old_color.getBlue()/255.0
+
+        if isinstance(l, int):
+            #TODO: At the time Catroid implements a sensor for hue or lightness h should be
+            #      changed to the hue value of the pen in the scene
+            l = l % 200
+            l = (100 - abs(l - 100))/100.0
+            h, s = 0, 1.0
+
+            #TODO: At the time Catroid implements a sensor for hue or lightness l should be
+            #      changed to the lightness value of the pen in the scene
+            C = (1 - abs(2*l - 1)) * s
+            X = C * (1-abs( ( (h/60) % 2) -1 ) )
+            m = l - C/2
+            
+            print l, C, X, m
+            #10 -18 0 19
+            if h < 60 and h >= 0:
+                r_, g_, b_ = C, X, 0
+            if h < 120 and h >= 60:
+                r_, g_, b_ = X, C, 0
+            if h < 180 and h >= 120:
+                r_, g_, b_ = 0, C, X
+            if h < 240 and h >= 180:
+                r_, g_, b_ = 0, X, C
+            if h < 300 and h >= 240:
+                r_, g_, b_ = X, 0, C
+            if h < 360 and h >= 300:
+                r_, g_, b_ = C, 0, X
+
+            r, g, b = (r_ + m) * 255, (g_ + m) * 255, (b_ + m) * 255
+
+            return self.CatrobatClass(int(r),int(g),int(b))
+
+        elif isinstance(l, catformula.FormulaElement):
+            #hue = hue % 200
+            l = self._converted_helper_brick_or_formula_element([l, 200], "%") # l%200
+            l = self._converted_helper_brick_or_formula_element([l], "()") # (l%200)
+            l = self._converted_helper_brick_or_formula_element([l, 100], "-") # (l%200)-100
+            l = self._converted_helper_brick_or_formula_element([l], "()") # ((l%200)-100)
+            l = self._converted_helper_brick_or_formula_element([l, l], "*") # ((l%200)-100)^2
+            l = self._converted_helper_brick_or_formula_element([l], "()") # (((l%200)-100)^2)
+            l = self._converted_helper_brick_or_formula_element([l], "sqrt") # sqrt(((l%200)-100)^2)
+            l = self._converted_helper_brick_or_formula_element([100, l], "-") # 100 - sqrt(((l%200)-100)^2)
+            l = self._converted_helper_brick_or_formula_element([l], "()") # (100 - sqrt(((l%200)-100)^2))
+            l = self._converted_helper_brick_or_formula_element([l, 100], "/") # (100 - sqrt(((l%200)-100)^2))/100
+            l = self._converted_helper_brick_or_formula_element([l], "()") # ((100 - sqrt(((l%200)-100)^2))/100)
+
+            #TODO: At the time Catroid implements a sensor for hue or lightness h should be
+            #      changed to the hue value of the pen in the scene
+
+            h, s = 0, 1.0
+
+            C, m, X = self._set_up_CmX_helper(h, s, l)
+
+            workaround = []
+            for start_angle in range(0, 360, 60):
+                workaround.extend(self._get_hsv_conditions_helper(h, C, m, X, start_angle, start_angle+60))
+
+            return workaround
