@@ -277,6 +277,7 @@ class _ScratchToCatrobat(object):
         "mouseX": catformula.Sensors.FINGER_X,
         "mouseY": catformula.Sensors.FINGER_Y,
         "timeAndDate": None,
+        "getAttribute:of:": None,
 
         # clone
         "createCloneOf": catbricks.CloneBrick,
@@ -1804,3 +1805,40 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
         else:
             return catbricks.NoteBrick("Error: Not a valid parameter")
         return go_to_brick
+
+    @_register_handler(_block_name_to_handler_map, "getAttribute:of:")
+    def _convert_of_block(self):
+        arguments = self.arguments
+        
+        attribute = arguments[0]
+        base_sprite = arguments[1]
+        
+        sprite_obj = None
+        for sprite in self.scene.spriteList:
+            if sprite.getName() == base_sprite:
+                sprite_obj = sprite
+        if base_sprite in self.script_context.sprite_context.context.upcoming_sprites:
+            sprite_obj = self.script_context.sprite_context.context.upcoming_sprites[base_sprite]
+        else:
+            sprite_obj = SpriteFactory().newInstance(SpriteFactory.SPRITE_SINGLE, base_sprite)
+            self.script_context.sprite_context.context.upcoming_sprites[sprite_obj.getName()] = sprite_obj
+
+        #WORKAROUND for property of requested sprite in bp of requested sprite
+        workaround_script = catbase.BroadcastScript(base_sprite + '_' + attribute)
+
+        wait_brick = catbricks.WaitBrick(100)
+        workaround_script.addBrick(wait_brick)
+
+        attribute_user_variable = catformula.UserVariable(base_sprite + '_' + attribute)
+        catrobat.add_user_variable(self.project, base_sprite + '_' + attribute, sprite_obj, sprite_obj.getName())
+        attribute_user_variable_brick = None
+        if attribute == 'x position':
+            sensor = catformula.Sensors.OBJECT_X
+            sensor_formula_element = catformula.FormulaElement(catElementType.SENSOR, str(sensor), None)
+            attribute_user_variable_brick = catbricks.SetVariableBrick(catformula.Formula(sensor_formula_element), attribute_user_variable)
+        workaround_script.addBrick(attribute_user_variable_brick)
+
+        sprite_obj.addScript(workaround_script)
+
+        attribute_formula_element = catformula.FormulaElement(catElementType.USER_VARIABLE, base_sprite + '_' + attribute, None)
+        return attribute_formula_element
