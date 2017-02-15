@@ -1931,60 +1931,44 @@ class TestConvertBlocks(common_testing.BaseTestCase):
     #setPenHueTo
     def test_can_convert_set_pen_color_hue_block(self):
         scratch_block = ["setPenHueTo:", 50]
-        [catr_bricks] = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
-        assert isinstance(catr_bricks, catbricks.SetPenColorBrick)
+        red_set, green_set, blue_set, set_pen_color_brick = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
+        assert isinstance(set_pen_color_brick, catbricks.SetPenColorBrick)
+        assert red_set.userVariable.name == "red"
+        assert green_set.userVariable.name == "green"
+        assert blue_set.userVariable.name == "blue"
 
     #setPenHueTo
     def test_can_convert_set_pen_color_hue_block_with_formula(self):
         scratch_block = ["setPenHueTo:", ["+", 25, 25]]
         catr_bricks = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
-        assert isinstance(catr_bricks[0], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[1], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[2], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[3], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[4], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[5], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[6], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[7], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[8], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[9], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[10], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[11], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[12], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[13], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[14], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[15], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[16], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[17], catbricks.IfThenLogicEndBrick)
+        for i in range(0, len(catr_bricks)-1, 5):
+            assert isinstance(catr_bricks[i], catbricks.IfThenLogicBeginBrick)
+            assert isinstance(catr_bricks[i+1], catbricks.SetVariableBrick)
+            assert isinstance(catr_bricks[i+2], catbricks.SetVariableBrick)
+            assert isinstance(catr_bricks[i+3], catbricks.SetVariableBrick)
+            assert isinstance(catr_bricks[i+4], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[len(catr_bricks)-1], catbricks.SetPenColorBrick)
 
     #setPenShadeTo
     def test_can_convert_set_pen_shade_block(self):
         scratch_block = ["setPenShadeTo:", 50]
-        [catr_bricks] = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
-        assert isinstance(catr_bricks, catbricks.SetPenColorBrick)
+        red_set, green_set, blue_set, set_pen_color_brick = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
+        assert isinstance(set_pen_color_brick, catbricks.SetPenColorBrick)
+        assert red_set.userVariable.name == "red"
+        assert green_set.userVariable.name == "green"
+        assert blue_set.userVariable.name == "blue"
 
     #setPenShadeTo
     def test_can_convert_set_shade_block_with_formula(self):
         scratch_block = ["setPenShadeTo:", ["+", 25, 25]]
         catr_bricks = self.block_converter._catrobat_bricks_from(scratch_block, DUMMY_CATR_SPRITE)
-        assert isinstance(catr_bricks[0], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[1], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[2], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[3], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[4], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[5], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[6], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[7], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[8], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[9], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[10], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[11], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[12], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[13], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[14], catbricks.IfThenLogicEndBrick)
-        assert isinstance(catr_bricks[15], catbricks.IfThenLogicBeginBrick)
-        assert isinstance(catr_bricks[16], catbricks.SetPenColorBrick)
-        assert isinstance(catr_bricks[17], catbricks.IfThenLogicEndBrick)
+        for i in range(0, len(catr_bricks)-1, 5):
+            assert isinstance(catr_bricks[i], catbricks.IfThenLogicBeginBrick)
+            assert isinstance(catr_bricks[i+1], catbricks.SetVariableBrick)
+            assert isinstance(catr_bricks[i+2], catbricks.SetVariableBrick)
+            assert isinstance(catr_bricks[i+3], catbricks.SetVariableBrick)
+            assert isinstance(catr_bricks[i+4], catbricks.IfThenLogicEndBrick)
+        assert isinstance(catr_bricks[len(catr_bricks)-1], catbricks.SetPenColorBrick)
 
     #call
     def test_can_convert_call_block_user_script_already_defined_simple(self):

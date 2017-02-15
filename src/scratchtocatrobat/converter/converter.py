@@ -2040,7 +2040,25 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
 
             r, g, b = (r_ + m) * 255, (g_ + m) * 255, (b_ + m) * 255
 
-            return self.CatrobatClass(int(r),int(g),int(b))
+            #creating uservariables
+            red_uv, green_uv, blue_uv = catformula.UserVariable("red"), catformula.UserVariable("green"), \
+                                        catformula.UserVariable("blue")
+            red_uv.value, green_uv.value, blue_uv.value = catformula.Formula(r), \
+                                                          catformula.Formula(g), \
+                                                          catformula.Formula(b)
+            catrobat.add_user_variable(self.project, "red", self.sprite, self.sprite.getName())
+            catrobat.add_user_variable(self.project, "green", self.sprite, self.sprite.getName())
+            catrobat.add_user_variable(self.project, "blue", self.sprite, self.sprite.getName())
+            red_sv = catbricks.SetVariableBrick(catformula.Formula(r), red_uv)
+            green_sv = catbricks.SetVariableBrick(catformula.Formula(g), green_uv)
+            blue_sv = catbricks.SetVariableBrick(catformula.Formula(b), blue_uv)
+
+            red = catformula.FormulaElement(catElementType.USER_VARIABLE, "red", None)
+            green = catformula.FormulaElement(catElementType.USER_VARIABLE, "green", None)
+            blue = catformula.FormulaElement(catElementType.USER_VARIABLE, "blue", None)
+
+            return [red_sv, green_sv, blue_sv, self.CatrobatClass(catformula.Formula(red), \
+                                    catformula.Formula(green), catformula.Formula(blue))]
 
         elif isinstance(l, catformula.FormulaElement):
             #hue = hue % 200
@@ -2063,8 +2081,25 @@ class _BlocksConversionTraverser(scratch.AbstractBlocksTraverser):
 
             C, m, X = self._set_up_CmX_helper(h, s, l)
 
+            red_uv, green_uv, blue_uv = catformula.UserVariable("red"), catformula.UserVariable("green"), \
+                                        catformula.UserVariable("blue")
+            red_uv.value, green_uv.value, blue_uv.value = catformula.Formula(0), \
+                                                          catformula.Formula(0), \
+                                                          catformula.Formula(0)
+            catrobat.add_user_variable(self.project, "red", self.sprite, self.sprite.getName())
+            catrobat.add_user_variable(self.project, "green", self.sprite, self.sprite.getName())
+            catrobat.add_user_variable(self.project, "blue", self.sprite, self.sprite.getName())
+
             workaround = []
             for start_angle in range(0, 360, 60):
-                workaround.extend(self._get_hsv_conditions_helper(h, C, m, X, start_angle, start_angle+60))
+                workaround.extend(self._get_hsv_conditions_helper(h, C, m, X, start_angle, start_angle+60, red_uv, \
+                                                                  green_uv, blue_uv))
+
+            red = catformula.FormulaElement(catElementType.USER_VARIABLE, "red", None)
+            green = catformula.FormulaElement(catElementType.USER_VARIABLE, "green", None)
+            blue = catformula.FormulaElement(catElementType.USER_VARIABLE, "blue", None)
+
+            workaround.append(self.CatrobatClass(catformula.Formula(red), \
+                              catformula.Formula(green), catformula.Formula(blue)))
 
             return workaround
